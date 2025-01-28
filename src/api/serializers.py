@@ -1,4 +1,4 @@
-from rest_framework import serializers
+from rest_framework import serializers 
 from api.models import Avatar ,Space ,SpaceElement ,Element ,Map ,MapElement ,CustomUser
 
 
@@ -9,8 +9,6 @@ class CustomUserMetadataSerializer(serializers.ModelSerializer):
             'avatar_id',
         ]
 
-
-        
 
 class AvatarsSerializer( serializers.ModelSerializer):
     class Meta:
@@ -26,7 +24,7 @@ class SpaceSerializer( serializers.ModelSerializer):
         model = Space
         fields = [
             'name',
-            'dimensions',
+            'dimension',
             'map',
         ]
 
@@ -34,9 +32,14 @@ class SpaceSerializer( serializers.ModelSerializer):
         def create(self, validated_data):
             dimension = validated_data['dimension']
             width, height = map(int ,dimension.split('x'))
-            map_id = validated_data['map_id']
-            map_obj = Map.objects.get(id=map_id)
 
+            map_id = validated_data['map_id']
+            try:
+                map_obj = Map.objects.get(id=map_id)
+
+            except Map.DoesNotExist:
+                raise serializers.ValidationError("Map does not exist")
+            
         #create space and return 
             space =Space.objects.create(
                 name=validated_data['name'],
@@ -45,6 +48,8 @@ class SpaceSerializer( serializers.ModelSerializer):
                 map=map_obj,
             )
             return space
+        
+
 
 class SpaceElementSerializer( serializers.ModelSerializer):
     class Meta:
