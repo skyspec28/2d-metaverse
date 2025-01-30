@@ -85,6 +85,8 @@ class MapSerializeer(serializers.ModelSerializer):
             'weidth',
             'height',
             'name',
+            'image_url',
+            'is_static',
             
         ]
 
