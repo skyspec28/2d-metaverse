@@ -1,26 +1,34 @@
 import uuid
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.forms import ValidationError
 
 class CustomUser(AbstractUser):
     def __str__(self):
         return self.username
 
 class Space(models.Model):
-    # id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)  # renamed from space_id for consistency
     name = models.CharField(max_length=255)
     width = models.IntegerField()
     height = models.IntegerField(null=True, blank=True)
-    dimension = models.IntegerField(null=True, blank=True)
+    dimension = models.CharField(max_length=10, null=True, blank=True)  # Store "widthxheight"
     map = models.ForeignKey('Map', on_delete=models.CASCADE)
     thumbnail = models.URLField(null=True, blank=True)
 
+    def clean(self):
+        if self.width or self.height <= 0 :
+            raise ValidationError("Width and height must be greater than zero.")
+
+    def save(self, *args, **kwargs):
+        """Automatically generate the dimension field before saving."""
+        if self.width and self.height:
+            self.dimension = f"{self.width}x{self.height}"
+        else:
+            self.dimension = None  # If width or height is missing, set dimension to None
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return f"Space {self.id} - {self.name}"
-    
-    @property
-    def dimension(self):
-        return f"{self.width}x{self.height}"
 
 class SpaceElement(models.Model):
     element = models.ForeignKey('Element', on_delete=models.CASCADE)
@@ -32,7 +40,6 @@ class SpaceElement(models.Model):
         return f"Element {self.element.id} in Space {self.space.id}"
 
 class Element(models.Model):
-    # id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)  # renamed from element_id
     width = models.IntegerField()
     height = models.IntegerField()
     image_url = models.URLField()

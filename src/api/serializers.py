@@ -19,37 +19,42 @@ class AvatarsSerializer( serializers.ModelSerializer):
             'name',
         ]
 
-class SpaceSerializer( serializers.ModelSerializer):
+class SpaceSerializer(serializers.ModelSerializer):
+    map_id = serializers.PrimaryKeyRelatedField(
+        source='map.id',
+        read_only=True
+    )
+    dimension = serializers.CharField(read_only=True)
+
     class Meta:
         model = Space
         fields = [
+            'id',
             'name',
+            'width',
+            'height',
             'dimension',
             'map',
+            'thumbnail',
+            'map_id',
         ]
 
-        #get map objects
-        def create(self, validated_data):
-            dimension = validated_data['dimension']
-            width, height = map(int ,dimension.split('x'))
-
-            map_id = validated_data['map_id']
-            try:
-                map_obj = Map.objects.get(id=map_id)
-
-            except Map.DoesNotExist:
-                raise serializers.ValidationError("Map does not exist")
+    def create(self, validated_data):
+        try:
+            # Map is already validated by the serializer
+            map_obj = validated_data['map']
             
-        #create space and return 
-            space =Space.objects.create(
+            # Create space with the validated data
+            space = Space.objects.create(
                 name=validated_data['name'],
-                width=width,
-                height=height,
+                width=validated_data['width'],
+                height=validated_data['height'],
                 map=map_obj,
             )
             return space
-        
-
+            
+        except KeyError as e:
+            raise serializers.ValidationError(f"Missing required field: {str(e)}")
 
 class SpaceElementSerializer( serializers.ModelSerializer):
     class Meta:
