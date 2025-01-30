@@ -1,4 +1,3 @@
-import uuid
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.forms import ValidationError
@@ -43,6 +42,8 @@ class Element(models.Model):
     width = models.IntegerField()
     height = models.IntegerField()
     image_url = models.URLField()
+    is_static = models.BooleanField(default=True)
+ 
 
     def __str__(self):
         return f"Element {self.id}"
