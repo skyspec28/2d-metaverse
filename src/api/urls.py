@@ -4,5 +4,8 @@ from . import views
 
 urlpatterns =[
     path('avatars/<int:pk>/', views.AvatarRetrieveView.as_view(), name='avatar-detail'),
-    path('spaces/<int:pk>/', views.SpaceView.as_view(), name='space-create')
+    path('spaces/new/', views.CreateSpaceAPIView.as_view(), name='space-create'),
+    path('spaces/delete/<int:pk>/', views.DestroySpaceView.as_view(), name='space-delete'),
+    path('spaces/all/', views.SpaceListAPIView.as_view(), name='space-list'),
+    path('spaces/<int:pk>/', views.RetrieveSpaceElementAPIView.as_view(), name='space-detail'),
 ]
