@@ -39,33 +39,71 @@ class SpaceElement(models.Model):
         return f"Element {self.element.id} in Space {self.space.id}"
 
 class Element(models.Model):
-    width = models.IntegerField()
-    height = models.IntegerField()
-    image_url = models.URLField()
-    is_static = models.BooleanField(default=True)
- 
+    """
+    Represents interactive or static elements in a map
+    """
+    ELEMENT_TYPES = [
+        ('furniture', 'Furniture'),
+        ('interactive', 'Interactive Object'),
+        ('decoration', 'Decoration'),
+        ('portal', 'Portal'),
+        ('spawn', 'Spawn Point'),
+    ]
+
+    name = models.CharField(max_length=255 ,null=True ,blank=True)
+    type = models.CharField(max_length=20, choices=ELEMENT_TYPES , null=True, blank=True)
+    
+    # Sprite or image representation
+    sprite_url = models.URLField(null=True, blank=True)
+    
+    is_walkable = models.BooleanField(default=False)
+    interaction_script = models.TextField(null=True, blank=True)
 
     def __str__(self):
-        return f"Element {self.id}"
+        return f"{self.name} ({self.type})"
+
 
 class Map(models.Model):
-    width = models.IntegerField()
-    height = models.IntegerField()
+    """
+    Represents a spatial map/environment in the Gather Town clone
+    """
     name = models.CharField(max_length=255)
-    image_url = models.URLField(null=True, blank=True)
-    is_static = models.BooleanField(default=True)
+    width = models.IntegerField()  # Map width in tiles
+    height = models.IntegerField()  # Map height in tiles
+    
+    background_image = models.URLField(null=True, blank=True)
+    
+    tile_size = models.IntegerField(default=32)  # Pixel size of each tile
+    
+    elements = models.ManyToManyField(
+        Element, 
+        through='MapElement', 
+        related_name='maps'
+    )
 
     def __str__(self):
         return self.name
+    
 
 class MapElement(models.Model):
-    map = models.ForeignKey('Map', on_delete=models.CASCADE)
-    element = models.ForeignKey('Element', on_delete=models.SET_NULL, null=True, blank=True)
-    x = models.IntegerField(null=True, blank=True)
-    y = models.IntegerField(null=True, blank=True)
+    """
+    Represents the placement of an Element within a specific Map
+    """
+    map = models.ForeignKey(Map, on_delete=models.CASCADE)
+    element = models.ForeignKey(Element, on_delete=models.CASCADE)
+    
+    x_coordinate = models.FloatField()  # X position on the map
+    y_coordinate = models.FloatField()  # Y position on the map
+    
+
+    rotation = models.FloatField(default=0)
+    z_index = models.IntegerField(default=0)  # For layering elements
+
+    class Meta:
+        unique_together = ('map', 'x_coordinate', 'y_coordinate')
 
     def __str__(self):
-        return f"Element {self.element.id} in Map {self.map.id}"
+        return f"{self.element.name} at ({self.x_coordinate}, {self.y_coordinate}) in {self.map.name}"
 
 class Avatar(models.Model):
     # id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)  # renamed from avatar_id
