@@ -1,16 +1,14 @@
 from rest_framework.response import Response
 from rest_framework import status ,generics
-from api.models import Avatar ,Space ,Element ,SpaceElement
+from api.models import Avatar ,Space ,Element ,Map
 from rest_framework.permissions import IsAuthenticated ,IsAdminUser
 
 from api.serializers import (
     AvatarsSerializer,
     SpaceSerializer,
-    ElementSerializer
-    # SpaceElementSerializer,
-    # ElementSerializer,
-    # MapSerializeer,
-    # MapELementSerializer,
+    ElementSerializer,
+    MapSerializer
+
     
 )
 
@@ -106,13 +104,18 @@ class ElementCreateAPIView(generics.CreateAPIView):
 
             except Element.DoesNotExist:
                 return Response({"detail": "Element not found"}, status=status.HTTP_404_NOT_FOUND)
+        return Response(
+            {"error": serializer.errors},
+            status=status.HTTP_400_BAD_REQUEST
+        )
             
 class ElementUpdateAPIView(generics.UpdateAPIView):
     """Update an existing element"""
     queryset=Element.objects.all()
     serializer_class=ElementSerializer
+    permission_classes = [IsAdminUser]  # only admin can update elements
 
-    def put (self, request, pk, format=None):
+    def update (self, request, pk, format=None):
         try :
             element=Element.objects.get(id=pk)
             serializer=self.get_serializer(element, data=request.data)
@@ -121,4 +124,101 @@ class ElementUpdateAPIView(generics.UpdateAPIView):
 
         if serializer.is_valid():
             element_obj=serializer.save()
+            image_url= element_obj.image_url
+        
+            return Response(
+                {"image_url": image_url},
+                status=status.HTTP_200_OK
+            )
 
+        return Response(
+            {"error": serializer.errors},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+class CreateAvatarAPIView(generics.CreateAPIView):
+    """Create a new avatar"""
+    queryset=Avatar.objects.all()
+    serializer_class=AvatarsSerializer
+    permission_classes = [IsAdminUser]  # only admin can create avatars
+
+    def create(self, request, format=None):
+        serializer= self.get_serializer(data=request.data)
+         
+        if serializer.is_valid():
+            try:
+                avatar=serializer.save()
+                return Response(
+                    {
+                        "avatar_id": avatar.id
+                     
+                     },
+                    status=status.HTTP_201_CREATED
+                )
+
+            except Avatar.DoesNotExist:
+                return Response({"detail": "Avatar not found"}, status=status.HTTP_404_NOT_FOUND)
+        
+        return Response(
+            {"error": serializer.errors},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+class MapCreateAPIView(generics.CreateAPIView):
+    """
+    Creates a new map with elements. Admin only.
+    Expects elements with both id and name.
+    """
+    queryset = Map.objects.all()
+    serializer_class = MapSerializer
+    permission_classes = [IsAdminUser]
+
+    
+
+
+
+    # def create(self, request, *args, **kwargs):
+    #     elements_data = request.data.get('elements', [])
+        
+    #     # Validate elements data is a list
+    #     if not isinstance(elements_data, list):
+    #         return Response(
+    #             {"error": "Elements must be a list"},
+    #             status=status.HTTP_400_BAD_REQUEST
+    #         )
+
+    #     # Quick validation of elements data
+    #     for element in elements_data:
+    #         if not isinstance(element, dict):
+    #             return Response(
+    #                 {"error": "Each element must be an object"},
+    #                 status=status.HTTP_400_BAD_REQUEST
+    #             )
+            
+    #         if 'id' not in element or 'name' not in element:
+    #             return Response(
+    #                 {"error": "Each element needs an id and name"},
+    #                 status=status.HTTP_400_BAD_REQUEST
+    #             )
+
+    #     # Create the map
+    #     serializer = self.get_serializer(data=request.data)
+    #     serializer.is_valid(raise_exception=True)
+    #     map_instance = serializer.save()
+
+    #     # Add elements
+    #     for element_data in elements_data:
+    #         try:
+    #             element = Element.objects.get(
+    #                 id=element_data['id'],
+    #                 name=element_data['name']
+    #             )
+    #             map_instance.elements.add(element)  # Changed from element to elements
+    #         except Element.DoesNotExist:
+    #             map_instance.delete()  # Clean up if something fails
+    #             return Response(
+    #                 {"error": f"Element {element_data['id']} not found"},
+    #                 status=status.HTTP_400_BAD_REQUEST
+    #             )
+
+    #     return Response(serializer.data, status=status.HTTP_
