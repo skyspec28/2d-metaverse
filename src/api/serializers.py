@@ -1,5 +1,5 @@
 from rest_framework import serializers 
-from api.models import Avatar ,Space ,SpaceElement ,Element ,Map ,MapElement ,CustomUser
+from api.models import Avatar,Space,SpaceElement,Element,CustomUser,Map ,MapElement
 
 
 class CustomUserMetadataSerializer(serializers.ModelSerializer):
@@ -77,27 +77,48 @@ class ElementSerializer( serializers.ModelSerializer):
             'image_url',
 
         ]
-        
-class MapSerializeer(serializers.ModelSerializer):
+
+
+class MapElementSerializer(serializers.ModelSerializer):
+    element = ElementSerializer(read_only=True)
+    element_id = serializers.PrimaryKeyRelatedField(
+        queryset=Element.objects.all(), 
+        source='element', 
+        write_only=True
+    )
+
+    class Meta:
+        model = MapElement
+        fields = ['element', 'element_id', 'x_coordinate', 'y_coordinate', 'rotation', 'z_index']
+
+class MapSerializer(serializers.ModelSerializer):
+    elements = MapElementSerializer(
+        source='mapelement_set', 
+        many=True, 
+        required=False
+    )
+    
+
     class Meta:
         model = Map
-        fields =[
-            'weidth',
-            'height',
-            'name',
-            'image_url',
-            'is_static',
-            
-        ]
+        fields = ['id', 'name', 'width', 'height', 'background_image', 'tile_size', 'elements']
 
-class MapELementSerializer(serializers.ModelSerializer):
-    class Meta:
-        model= MapElement
-        fields = [
-            'id',
-            'map',
-            'element',
-            'x',
-            'y'
-        ]
-
+    def create(self, validated_data):
+        # Extract elements data if provided
+        elements_data = validated_data.pop('mapelement_set', [])
+        
+        # Create map first
+        map_instance = Map.objects.create(**validated_data)
+        
+        # Add elements if provided
+        for element_data in elements_data:
+            MapElement.objects.create(
+                map=map_instance,
+                element=element_data['element'],
+                x_coordinate=element_data['x_coordinate'],
+                y_coordinate=element_data['y_coordinate'],
+                rotation=element_data.get('rotation', 0),
+                z_index=element_data.get('z_index', 0)
+            )
+        
+        return map_instance
