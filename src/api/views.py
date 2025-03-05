@@ -1,7 +1,10 @@
+from django.shortcuts import get_object_or_404
 from rest_framework.response import Response
+from rest_framework.decorators import api_view
 from rest_framework import status ,generics
 from api.models import Avatar ,Space ,Element ,Map
 from rest_framework.permissions import IsAuthenticated ,IsAdminUser
+from rest_framework.exceptions import MethodNotAllowed
 
 from api.serializers import (
     AvatarsSerializer,
@@ -21,11 +24,15 @@ The setting DEFAULT_PERMISSION_CLASSES in settings.py now includes IsAuthenticat
 """
 
 
-
-class AvatarRetrieveView(generics.RetrieveAPIView):
-    queryset = Avatar.objects.all()
-    serializer_class = AvatarsSerializer
-    
+@api_view(['GET' ,'POST'])
+def  AvatarRetrieveView(request , pk=None):
+    if request.method == 'GET':
+        try:
+            avatar=get_object_or_404(Avatar ,pk=pk)
+            serializer =AvatarsSerializer(avatar)
+            return Response (serializer.data)
+        except MethodNotAllowed:
+            return Response ({"error":"Method not allowed"})
 
 class CreateSpaceAPIView(generics.CreateAPIView):
     queryset = Space.objects.all()
@@ -173,7 +180,7 @@ class MapCreateAPIView(generics.CreateAPIView):
     serializer_class = MapSerializer
     permission_classes = [IsAdminUser]
 
-    
+
 
 
 
@@ -221,4 +228,4 @@ class MapCreateAPIView(generics.CreateAPIView):
     #                 status=status.HTTP_400_BAD_REQUEST
     #             )
 
-    #     return Response(serializer.data, status=status.HTTP_
+    #     return Response(serializer.data, status=status.HTTP_ 
