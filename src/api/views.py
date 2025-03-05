@@ -24,7 +24,7 @@ The setting DEFAULT_PERMISSION_CLASSES in settings.py now includes IsAuthenticat
 """
 
 
-@api_view(['GET' ,'POST'])
+@api_view(['GET'])
 def  AvatarRetrieveView(request , pk=None):
     if request.method == 'GET':
         try:
