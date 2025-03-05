@@ -70,13 +70,7 @@ class SpaceElementSerializer( serializers.ModelSerializer):
 class ElementSerializer( serializers.ModelSerializer):
     class Meta:
         model = Element
-        fields = [
-            'id',
-            'width',
-            'height',
-            'image_url',
-
-        ]
+        fields=  "__all__"
 
 
 class MapElementSerializer(serializers.ModelSerializer):
