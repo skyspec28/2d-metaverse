@@ -8,15 +8,15 @@ class CustomUser(AbstractUser):
 
 class Space(models.Model):
     name = models.CharField(max_length=255)
-    width = models.IntegerField()
-    height = models.IntegerField(null=True, blank=True)
-    dimension = models.CharField(max_length=10, null=True, blank=True)  # Store "widthxheight"
+    width = models.IntegerField(null=False , blank= False)
+    height = models.IntegerField(null=False, blank=False)
+    dimension = models.CharField(max_length=10, null=False, blank=False)  
     map = models.ForeignKey('Map', on_delete=models.CASCADE)
-    thumbnail = models.URLField(null=True, blank=True)
+    thumbnail = models.URLField(null=False, blank=False)
 
-    def clean(self):
-        if self.width or self.height <= 0 :
-            raise ValidationError("Width and height must be greater than zero.")
+    # def clean(self):
+    #     if self.width or self.height <= 0 :
+    #         raise ValidationError("Width and height must be greater than zero.")
 
     def save(self, *args, **kwargs):
         """Automatically generate the dimension field before saving."""
@@ -50,14 +50,14 @@ class Element(models.Model):
         ('spawn', 'Spawn Point'),
     ]
 
-    name = models.CharField(max_length=255 ,null=True ,blank=True)
-    type = models.CharField(max_length=20, choices=ELEMENT_TYPES , null=True, blank=True)
+    name = models.CharField(max_length=255 ,null=False ,blank=False)
+    type = models.CharField(max_length=20, choices=ELEMENT_TYPES , null=False, blank=False)
     
     # Sprite or image representation
-    sprite_url = models.URLField(null=True, blank=True)
+    sprite_url = models.URLField(null=False, blank=False)
     
     is_walkable = models.BooleanField(default=False)
-    interaction_script = models.TextField(null=True, blank=True)
+    interaction_script = models.TextField(null=False, blank=False)
 
     def __str__(self):
         return f"{self.name} ({self.type})"
@@ -71,7 +71,7 @@ class Map(models.Model):
     width = models.IntegerField()  # Map width in tiles
     height = models.IntegerField()  # Map height in tiles
     
-    background_image = models.URLField(null=True, blank=True)
+    background_image = models.URLField(null=False, blank=False)
     
     tile_size = models.IntegerField(default=32)  # Pixel size of each tile
     
@@ -90,10 +90,10 @@ class MapElement(models.Model):
     Represents the placement of an Element within a specific Map
     """
     map = models.ForeignKey(Map, on_delete=models.CASCADE)
-    element = models.ForeignKey(Element, on_delete=models.CASCADE)
+    element = models.ForeignKey(Element, on_delete=models.CASCADE,null=False , blank=False)
     
-    x_coordinate = models.FloatField()  # X position on the map
-    y_coordinate = models.FloatField()  # Y position on the map
+    x_coordinate = models.FloatField(default=0)  # X position on the map
+    y_coordinate = models.FloatField(default=0)  # Y position on the map
     
 
     rotation = models.FloatField(default=0)
@@ -106,9 +106,9 @@ class MapElement(models.Model):
         return f"{self.element.name} at ({self.x_coordinate}, {self.y_coordinate}) in {self.map.name}"
 
 class Avatar(models.Model):
-    # id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)  # renamed from avatar_id
-    image_url = models.URLField(null=True, blank=True)
-    name = models.CharField(max_length=255, null=True, blank=True)
+    # id = models.UUIDField(primary_key=False, default=uuid.uuid4, editable=False)  # renamed from avatar_id
+    image_url = models.URLField(null=False, blank=False)
+    name = models.CharField(max_length=255, null=False, blank=False)
 
     def __str__(self):
         return self.name if self.name else "Avatar" 
