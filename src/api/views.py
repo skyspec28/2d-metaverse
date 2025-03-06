@@ -5,6 +5,9 @@ from rest_framework import status ,generics
 from api.models import Avatar ,Space ,Element ,Map
 from rest_framework.permissions import IsAuthenticated ,IsAdminUser
 from rest_framework.exceptions import MethodNotAllowed
+from rest_framework import status
+from rest_framework.decorators import permission_classes
+from rest_framework.permissions import IsAdminUser
 
 from api.serializers import (
     AvatarsSerializer,
@@ -25,41 +28,54 @@ The setting DEFAULT_PERMISSION_CLASSES in settings.py now includes IsAuthenticat
 
 
 @api_view(['GET'])
-def  AvatarRetrieveView(request , pk=None):
+def  AvatarView(request , pk=None):
     if request.method == 'GET':
         try:
             avatar=get_object_or_404(Avatar ,pk=pk)
             serializer =AvatarsSerializer(avatar)
-            return Response (serializer.data)
+            return Response (serializer.data ,status=status.HTTP_200_OK) 
         except MethodNotAllowed:
             return Response ({"error":"Method not allowed"})
 
-class CreateSpaceAPIView(generics.CreateAPIView):
-    queryset = Space.objects.all()
-    serializer_class = SpaceSerializer
-    permission_classes = [IsAuthenticated] # only authenticated users can create spaces
-    
-    def create(self, request, format=None):
-        serializer = self.get_serializer(data=request.data)
+
+@api_view(['POST' ,'GET'])
+def SpaceCreateAPIView(request):
+    if request.method== 'POST':
+        serializer=SpaceSerializer(data=request.data)
         if serializer.is_valid():
             try:
-                space = serializer.save()
-                return Response(
-                    {
-                        "space_id": str(space.id),
+                space=serializer.save()
+                return Response({"space_id": str(space.id)} ,status=status.HTTP_201_CREATED)
+            
+            except Exception as e :
+                return Response ({"error": str(e)},status =status.HTTP_500_INTERNAL_SERVER_ERROR)   
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST) 
+# class CreateSpaceAPIView(generics.CreateAPIView):
+#     queryset = Space.objects.all()
+#     serializer_class = SpaceSerializer
+#     permission_classes = [IsAuthenticated] # only authenticated users can create spaces
+    
+#     def create(self, request, format=None):
+#         serializer = self.get_serializer(data=request.data)
+#         if serializer.is_valid():
+#             try:
+#                 space = serializer.save()
+#                 return Response(
+#                     {
+#                         "space_id": str(space.id),
                      
-                     },
-                    status=status.HTTP_201_CREATED
-                )
-            except Exception as e:
-                return Response(
-                    {"error": str(e)}, 
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-        return Response(
-            {"error": serializer.errors}, 
-            status=status.HTTP_400_BAD_REQUEST
-        )
+#                      },
+#                     status=status.HTTP_201_CREATED
+#                 )
+#             except Exception as e:
+#                 return Response(
+#                     {"error": str(e)}, 
+#                     status=status.HTTP_400_BAD_REQUEST
+#                 )
+#         return Response(
+#             {"error": serializer.errors}, 
+#             status=status.HTTP_400_BAD_REQUEST
+#         )
         
     
 class DestroySpaceView(generics.DestroyAPIView):
@@ -143,33 +159,64 @@ class ElementUpdateAPIView(generics.UpdateAPIView):
             status=status.HTTP_400_BAD_REQUEST
         )
 
-class CreateAvatarAPIView(generics.CreateAPIView):
-    """Create a new avatar"""
-    queryset=Avatar.objects.all()
-    serializer_class=AvatarsSerializer
-    permission_classes = [IsAdminUser]  # only admin can create avatars
-
-    def create(self, request, format=None):
-        serializer= self.get_serializer(data=request.data)
-         
+@api_view(['POST'])
+# @permission_classes([IsAdminUser])
+def AdminCreateAvatarView(request):
+    """
+    Creates a new Avatar.
+    
+    **Request Body Example:**
+    ```json
+    {
+        "name": "Warrior",
+        "image_url": "https://example.com/avatar.png"
+    }
+    ```
+    Returns:
+    - `201`: Avatar created successfully.
+    - `400`: Bad request (validation error).
+    - `500`: Internal server error.
+    """
+    if request.method== 'POST':
+        serializer=AvatarsSerializer(data=request.data)
         if serializer.is_valid():
             try:
                 avatar=serializer.save()
-                return Response(
-                    {
-                        "avatar_id": avatar.id
-                     
-                     },
-                    status=status.HTTP_201_CREATED
-                )
+                return Response ({"message":"created successfully","avatar_id": avatar.id}, status=status.HTTP_201_CREATED)
+            except Exception as e:  # Catch any unexpected errors
+                return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+        return Response({"error": serializer.errors},status=status.HTTP_400_BAD_REQUEST)
 
-            except Avatar.DoesNotExist:
-                return Response({"detail": "Avatar not found"}, status=status.HTTP_404_NOT_FOUND)
+
+
+# class CreateAPIView(generics.CreateAPIView):
+#     """Create a new avatar"""
+#     queryset=Avatar.objects.all()
+#     serializer_class=AvatarsSerializer
+#     permission_classes = [IsAdminUser]  # only admin can create avatars
+
+#     def create(self, request, format=None):
+#         serializer= self.get_serializer(data=request.data)
+         
+#         if serializer.is_valid():
+#             try:
+#                 avatar=serializer.save()
+#                 return Response(
+#                     {
+#                         "avatar_id": avatar.id
+                     
+#                      },
+#                     status=status.HTTP_201_CREATED
+#                 )
+
+#             except Avatar.DoesNotExist:
+#                 return Response({"detail": "Avatar not found"}, status=status.HTTP_404_NOT_FOUND)
         
-        return Response(
-            {"error": serializer.errors},
-            status=status.HTTP_400_BAD_REQUEST
-        )
+        # return Response(
+        #     {"error": serializer.errors},
+        #     status=status.HTTP_400_BAD_REQUEST
+        # )
 
 class MapCreateAPIView(generics.CreateAPIView):
     """
