@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2D Metaverse</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+            font-family: Arial, sans-serif;
+        }
+        
+        #game-container {
+            position: relative;
+        }
+        
+        #game-canvas {
+            border: 2px solid #333;
+            background-color: #fff;
+        }
+        
+        #controls {
+            margin-top: 10px;
+            text-align: center;
+        }
+        
+        .info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="game-canvas" width="800" height="600"></canvas>
+        <div class="info">Use arrow keys to move</div>
+        <div id="controls">
+            <p>2D Metaverse - Move with arrow keys, interact with space bar</p>
+        </div>
+    </div>
+
+    <script>
+        // Game constants
+        const TILE_SIZE = 32;
+        const PLAYER_SPEED = 3;
+        
+        // Game state
+        let playerX = 400;
+        let playerY = 300;
+        let playerColor = '#3498db';
+        let playerId = Math.floor(Math.random() * 1000000);
+        
+        // Input handling
+        const keys = {};
+        
+        // Canvas setup
+        const canvas = document.getElementById('game-canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // WebSocket setup
+        const wsScheme = window.location.protocol === 'https:' ? 'wss' : 'ws';
+        const socket = new WebSocket(`${wsScheme}://${window.location.host}/ws/`);
+        
+        socket.onopen = function(e) {
+            console.log('WebSocket connection established');
+            // Send initial player position
+            sendPlayerPosition();
+        };
+        
+        socket.onmessage = function(e) {
+            console.log('Message received:', e.data);
+            // Handle incoming messages (other players, map updates, etc.)
+            if (e.data === 'pong!') {
+                console.log('Received pong from server');
+                return;
+            }
+            
+            try {
+                const data = JSON.parse(e.data);
+                // Handle different message types here
+            } catch (error) {
+                console.error('Error parsing WebSocket message:', error);
+            }
+        };
+        
+        socket.onclose = function(e) {
+            console.log('WebSocket connection closed:', e);
+        };
+        
+        function sendPlayerPosition() {
+            if (socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({
+                    type: 'player_move',
+                    player_id: playerId,
+                    x: playerX,
+                    y: playerY
+                }));
+            }
+        }
+        
+        // Input event listeners
+        window.addEventListener('keydown', (e) => {
+            keys[e.key] = true;
+        });
+        
+        window.addEventListener('keyup', (e) => {
+            keys[e.key] = false;
+        });
+        
+        // Game loop
+        function gameLoop() {
+            update();
+            render();
+            requestAnimationFrame(gameLoop);
+        }
+        
+        function update() {
+            // Handle player movement
+            let moved = false;
+            
+            if (keys['ArrowUp'] || keys['w']) {
+                playerY -= PLAYER_SPEED;
+                moved = true;
+            }
+            if (keys['ArrowDown'] || keys['s']) {
+                playerY += PLAYER_SPEED;
+                moved = true;
+            }
+            if (keys['ArrowLeft'] || keys['a']) {
+                playerX -= PLAYER_SPEED;
+                moved = true;
+            }
+            if (keys['ArrowRight'] || keys['d']) {
+                playerX += PLAYER_SPEED;
+                moved = true;
+            }
+            
+            // Keep player within bounds
+            playerX = Math.max(TILE_SIZE/2, Math.min(canvas.width - TILE_SIZE/2, playerX));
+            playerY = Math.max(TILE_SIZE/2, Math.min(canvas.height - TILE_SIZE/2, playerY));
+            
+            // Send position update if player moved
+            if (moved) {
+                sendPlayerPosition();
+            }
+        }
+        
+        function render() {
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw grid
+            drawGrid();
+            
+            // Draw player
+            drawPlayer(playerX, playerY, playerColor);
+        }
+        
+        function drawGrid() {
+            ctx.strokeStyle = '#ddd';
+            ctx.lineWidth = 1;
+            
+            // Draw vertical lines
+            for (let x = 0; x <= canvas.width; x += TILE_SIZE) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+            }
+            
+            // Draw horizontal lines
+            for (let y = 0; y <= canvas.height; y += TILE_SIZE) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
+        }
+        
+        function drawPlayer(x, y, color) {
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.arc(x, y, TILE_SIZE/2, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Draw player outline
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
+        
+        // Start the game
+        gameLoop();
+        
+        // Ping the server every 30 seconds to keep the connection alive
+        setInterval(() => {
+            if (socket.readyState === WebSocket.OPEN) {
+                socket.send('ping');
+            }
+        }, 30000);
+    </script>
+</body>
+</html>
