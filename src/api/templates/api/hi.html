@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebSocket Test</title>
+</head>
+<body>
+    <h1>WebSocket Test</h1>
+    <button onclick="sendPing()">Send Ping</button>
+    <div id="output"></div>
+
+    <script>
+        const socket = new WebSocket('ws://localhost:8000/ws/');
+        const output = document.getElementById('output');
+
+        socket.onopen = function(e) {
+            output.innerHTML += '<p>Connected!</p>';
+        };
+
+        socket.onmessage = function(e) {
+            output.innerHTML += `<p>Received: ${e.data}</p>`;
+        };
+
+        socket.onclose = function(e) {
+            output.innerHTML += '<p>Disconnected</p>';
+        };
+
+        function sendPing() {
+            socket.send('ping');
+            output.innerHTML += '<p>Sent: ping</p>';
+        }
+    </script>
+</body>
+</html>
