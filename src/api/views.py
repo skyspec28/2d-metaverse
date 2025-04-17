@@ -1,4 +1,4 @@
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, render
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework import status ,generics
@@ -14,14 +14,14 @@ from api.serializers import (
     SpaceSerializer,
     ElementSerializer,
     MapSerializer
-
-    
 )
+
+from django.http import HttpResponse
 
 """
 Global Authentication Enforced Across All API Views
 
-To ensure that all API views in this project require authentication, we've configured the global permission 
+To ensure that all API views in this project require authentication, we've configured the global permission
 class in the Django REST Framework settings:
 The setting DEFAULT_PERMISSION_CLASSES in settings.py now includes IsAuthenticated.
 """
@@ -33,7 +33,7 @@ def  AvatarView(request , pk=None):
         try:
             avatar=get_object_or_404(Avatar ,pk=pk)
             serializer =AvatarsSerializer(avatar)
-            return Response (serializer.data ,status=status.HTTP_200_OK) 
+            return Response (serializer.data ,status=status.HTTP_200_OK)
         except MethodNotAllowed:
             return Response ({"error":"Method not allowed"})
 
@@ -46,15 +46,15 @@ def SpaceCreateAPIView(request):
             try:
                 space=serializer.save()
                 return Response({"space_id": str(space.id)} ,status=status.HTTP_201_CREATED)
-            
+
             except Exception as e :
-                return Response ({"error": str(e)},status =status.HTTP_500_INTERNAL_SERVER_ERROR)   
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST) 
+                return Response ({"error": str(e)},status =status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 # class CreateSpaceAPIView(generics.CreateAPIView):
 #     queryset = Space.objects.all()
 #     serializer_class = SpaceSerializer
 #     permission_classes = [IsAuthenticated] # only authenticated users can create spaces
-    
+
 #     def create(self, request, format=None):
 #         serializer = self.get_serializer(data=request.data)
 #         if serializer.is_valid():
@@ -63,21 +63,21 @@ def SpaceCreateAPIView(request):
 #                 return Response(
 #                     {
 #                         "space_id": str(space.id),
-                     
+
 #                      },
 #                     status=status.HTTP_201_CREATED
 #                 )
 #             except Exception as e:
 #                 return Response(
-#                     {"error": str(e)}, 
+#                     {"error": str(e)},
 #                     status=status.HTTP_400_BAD_REQUEST
 #                 )
 #         return Response(
-#             {"error": serializer.errors}, 
+#             {"error": serializer.errors},
 #             status=status.HTTP_400_BAD_REQUEST
 #         )
-        
-    
+
+
 class DestroySpaceView(generics.DestroyAPIView):
     def destroy (self , request, pk ,format=None):
         try:
@@ -86,23 +86,23 @@ class DestroySpaceView(generics.DestroyAPIView):
             return Response({"detail": "Space deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
         except Space.DoesNotExist:
             return Response({"detail": "Space not found"}, status=status.HTTP_404_NOT_FOUND)
-        
+
 
 class SpaceListAPIView(generics.ListAPIView):
     queryset=Space.objects.all()
     serializer_class=SpaceSerializer
 
-  
+
 # class RetrieveSpaceElementAPIView(generics.RetrieveAPIView):
 #     queryset=SpaceElement.objects.all()
 #     serializer_class=SpaceElementSerializer
 
 #  ADMIN ONLY TASK
 # ONLY ADMIN CAN ADD NEW MAP ,AVATARS ,STATTIC OBJECTS ,ELEMENTS ,
-# CAN CHANGE DIMENSIONS WHEN ADDED 
-# 
+# CAN CHANGE DIMENSIONS WHEN ADDED
+#
 
-# only admins can add and delete element to a map 
+# only admins can add and delete element to a map
 
 class ElementCreateAPIView(generics.CreateAPIView):
     """Create a new element , element are static objects like chairs """
@@ -120,7 +120,7 @@ class ElementCreateAPIView(generics.CreateAPIView):
                 return Response(
                     {
                         "element_id":element.id
-                     
+
                      },
                     status=status.HTTP_201_CREATED
                 )
@@ -131,7 +131,7 @@ class ElementCreateAPIView(generics.CreateAPIView):
             {"error": serializer.errors},
             status=status.HTTP_400_BAD_REQUEST
         )
-            
+
 class ElementUpdateAPIView(generics.UpdateAPIView):
     """Update an existing element"""
     queryset=Element.objects.all()
@@ -148,7 +148,7 @@ class ElementUpdateAPIView(generics.UpdateAPIView):
         if serializer.is_valid():
             element_obj=serializer.save()
             image_url= element_obj.image_url
-        
+
             return Response(
                 {"image_url": image_url},
                 status=status.HTTP_200_OK
@@ -164,7 +164,7 @@ class ElementUpdateAPIView(generics.UpdateAPIView):
 def AdminCreateAvatarView(request):
     """
     Creates a new Avatar.
-    
+
     **Request Body Example:**
     ```json
     {
@@ -185,7 +185,7 @@ def AdminCreateAvatarView(request):
                 return Response ({"message":"created successfully","avatar_id": avatar.id}, status=status.HTTP_201_CREATED)
             except Exception as e:  # Catch any unexpected errors
                 return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
+
         return Response({"error": serializer.errors},status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -198,21 +198,21 @@ def AdminCreateAvatarView(request):
 
 #     def create(self, request, format=None):
 #         serializer= self.get_serializer(data=request.data)
-         
+
 #         if serializer.is_valid():
 #             try:
 #                 avatar=serializer.save()
 #                 return Response(
 #                     {
 #                         "avatar_id": avatar.id
-                     
+
 #                      },
 #                     status=status.HTTP_201_CREATED
 #                 )
 
 #             except Avatar.DoesNotExist:
 #                 return Response({"detail": "Avatar not found"}, status=status.HTTP_404_NOT_FOUND)
-        
+
         # return Response(
         #     {"error": serializer.errors},
         #     status=status.HTTP_400_BAD_REQUEST
@@ -233,7 +233,7 @@ class MapCreateAPIView(generics.CreateAPIView):
 
     # def create(self, request, *args, **kwargs):
     #     elements_data = request.data.get('elements', [])
-        
+
     #     # Validate elements data is a list
     #     if not isinstance(elements_data, list):
     #         return Response(
@@ -248,7 +248,7 @@ class MapCreateAPIView(generics.CreateAPIView):
     #                 {"error": "Each element must be an object"},
     #                 status=status.HTTP_400_BAD_REQUEST
     #             )
-            
+
     #         if 'id' not in element or 'name' not in element:
     #             return Response(
     #                 {"error": "Each element needs an id and name"},
@@ -275,4 +275,22 @@ class MapCreateAPIView(generics.CreateAPIView):
     #                 status=status.HTTP_400_BAD_REQUEST
     #             )
 
-    #     return Response(serializer.data, status=status.HTTP_ 
+    #     return Response(serializer.data, status=status.HTTP_
+
+
+
+
+def index(request):
+    return HttpResponse("WebSocket server is running. Connect to /ws/ to use WebSockets.")
+
+def room(request, room_name):
+    return render(request, "api/room.html", {"room_name": room_name})
+
+def metaverse(request):
+    """Render the main metaverse interface"""
+    return render(request, "api/metaverse.html")
+
+def metaverse_rooms(request):
+    """Render the metaverse rooms selection page"""
+    return render(request, "api/rooms.html")
+

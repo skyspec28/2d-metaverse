@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2D Metaverse</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'api/css/metaverse.css' %}">
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="game-canvas" width="800" height="600"></canvas>
+        <div class="info">Use arrow keys to move</div>
+        <div class="player-list">
+            <h3>Players Online</h3>
+            <ul id="players-online">
+                <li>Loading...</li>
+            </ul>
+        </div>
+        <div class="chat-box">
+            <div class="chat-messages" id="chat-messages">
+                <div class="message system">Welcome to the Metaverse!</div>
+            </div>
+            <div class="chat-input">
+                <input type="text" id="chat-input" placeholder="Type a message...">
+                <button id="chat-send">Send</button>
+            </div>
+        </div>
+        <div id="controls">
+            <p>2D Metaverse - Move with arrow keys, interact with space bar</p>
+            <a href="{% url 'metaverse-rooms' %}" class="room-button">Change Room</a>
+        </div>
+    </div>
+
+    <script src="{% static 'api/js/metaverse.js' %}"></script>
+</body>
+</html>
