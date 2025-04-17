@@ -1,0 +1,4 @@
+name: runs test on PR
+
+on:
+  pull
