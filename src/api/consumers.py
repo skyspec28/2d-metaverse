@@ -1,10 +1,74 @@
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
-from asgiref.sync import sync_to_async
 from channels.db import database_sync_to_async
+from django.contrib.auth.models import AnonymousUser
+from .models import CustomUser
 
 # Store connected players by room
 players = {}
+
+class MetaverseConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
+        self.room_name = 'metaverse'
+        self.room_group_name = f'chat_{self.room_name}'
+
+        # Join room group
+        await self.channel_layer.group_add(
+            self.room_group_name,
+            self.channel_name
+        )
+
+        await self.accept()
+
+    async def disconnect(self, close_code):
+        # Leave room group
+        await self.channel_layer.group_discard(
+            self.room_group_name,
+            self.channel_name
+        )
+
+    async def receive(self, text_data):
+        text_data_json = json.loads(text_data)
+        message_type = text_data_json['type']
+
+        if message_type == 'player_move':
+            # Broadcast player movement to all clients
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    'type': 'player_move',
+                    'user_id': self.scope['user'].id,
+                    'x': text_data_json['x'],
+                    'y': text_data_json['y']
+                }
+            )
+        elif message_type == 'chat':
+            # Broadcast chat message to all clients
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    'type': 'chat',
+                    'user_id': self.scope['user'].id,
+                    'message': text_data_json['message']
+                }
+            )
+
+    async def player_move(self, event):
+        # Send player movement to WebSocket
+        await self.send(text_data=json.dumps({
+            'type': 'player_move',
+            'user_id': event['user_id'],
+            'x': event['x'],
+            'y': event['y']
+        }))
+
+    async def chat(self, event):
+        # Send chat message to WebSocket
+        await self.send(text_data=json.dumps({
+            'type': 'chat',
+            'user_id': event['user_id'],
+            'message': event['message']
+        }))
 
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):

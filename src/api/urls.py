@@ -1,10 +1,11 @@
 from django.urls import path
 from . import views
-from .views import AvatarView , SpaceCreateAPIView ,AdminCreateAvatarView
+from .views import AvatarView, SpaceCreateAPIView, AdminCreateAvatarView, register, login
 
-
-urlpatterns =[
+urlpatterns = [
     path('', views.index, name='index'),
+    path('auth/register/', register, name='register'),
+    path('auth/login/', login, name='login'),
     path('avatars/<int:pk>/', AvatarView, name='avatar-detail'),
     path('spaces/new/', SpaceCreateAPIView, name='space-create'),
     path('spaces/delete/<int:pk>/', views.DestroySpaceView.as_view(), name='space-delete'),
