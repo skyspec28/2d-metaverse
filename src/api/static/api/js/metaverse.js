@@ -35,9 +35,13 @@ const keys = {};
 const canvas = document.getElementById('game-canvas');
 const ctx = canvas.getContext('2d');
 
+// Get room name from URL or use default
+const urlParams = new URLSearchParams(window.location.search);
+const roomName = urlParams.get('room') || 'default';
+
 // WebSocket setup
 const wsScheme = window.location.protocol === 'https:' ? 'wss' : 'ws';
-const socket = new WebSocket(`${wsScheme}://${window.location.host}/ws/`);
+const socket = new WebSocket(`${wsScheme}://${window.location.host}/ws/metaverse/${roomName}/`);
 
 socket.onopen = function(e) {
     console.log('WebSocket connection established');
@@ -52,22 +56,63 @@ socket.onmessage = function(e) {
         console.log('Received pong from server');
         return;
     }
-    
+
     try {
         const data = JSON.parse(e.data);
-        if (data.type === 'player_position' && data.player_id !== playerId) {
-            // Update other player's position
-            otherPlayers[data.player_id] = {
-                x: data.x,
-                y: data.y,
-                direction: data.direction || 'down',
-                frame: data.frame || 0
-            };
+
+        switch(data.type) {
+            case 'player_position':
+                if (data.player_id !== playerId) {
+                    // Update other player's position
+                    otherPlayers[data.player_id] = {
+                        x: data.x,
+                        y: data.y,
+                        direction: data.direction || 'down',
+                        frame: data.frame || 0
+                    };
+                }
+                break;
+
+            case 'player_list':
+                // Update player list in UI
+                updatePlayerList(data.players);
+                break;
+
+            case 'player_leave':
+                // Remove player who left
+                if (data.player_id in otherPlayers) {
+                    delete otherPlayers[data.player_id];
+                    updatePlayerList(Object.keys(otherPlayers).concat([playerId]));
+                }
+                break;
+
+            case 'chat_message':
+                // Display chat message
+                displayChatMessage(data.player_id, data.message);
+                break;
         }
     } catch (error) {
         console.error('Error parsing WebSocket message:', error);
     }
 };
+
+// Update the player list in the UI
+function updatePlayerList(players) {
+    const playerList = document.getElementById('players-online');
+    playerList.innerHTML = '';
+
+    players.forEach(id => {
+        const li = document.createElement('li');
+        li.textContent = id === playerId ? `You (${id})` : `Player ${id}`;
+        playerList.appendChild(li);
+    });
+}
+
+// Display a chat message
+function displayChatMessage(senderId, message) {
+    console.log(`Chat from ${senderId}: ${message}`);
+    // In a real implementation, we would display this in a chat UI
+}
 
 socket.onclose = function(e) {
     console.log('WebSocket connection closed:', e);
@@ -94,7 +139,7 @@ function loadAssets() {
         assets.player.loaded = true;
     };
     assets.player.sprite.src = '/static/api/images/character.png';
-    
+
     // Load tile sprites
     assets.tiles.grass = new Image();
     assets.tiles.grass.onload = function() {
@@ -125,7 +170,7 @@ function update() {
     let oldX = playerX;
     let oldY = playerY;
     let oldDirection = playerDirection;
-    
+
     if (keys['ArrowUp'] || keys['w']) {
         playerY -= PLAYER_SPEED;
         playerDirection = 'up';
@@ -135,7 +180,7 @@ function update() {
         playerDirection = 'down';
         moved = true;
     }
-    
+
     if (keys['ArrowLeft'] || keys['a']) {
         playerX -= PLAYER_SPEED;
         playerDirection = 'left';
@@ -145,11 +190,11 @@ function update() {
         playerDirection = 'right';
         moved = true;
     }
-    
+
     // Keep player within bounds
     playerX = Math.max(TILE_SIZE/2, Math.min(canvas.width - TILE_SIZE/2, playerX));
     playerY = Math.max(TILE_SIZE/2, Math.min(canvas.height - TILE_SIZE/2, playerY));
-    
+
     // Update animation frame
     frameCount++;
     if (frameCount >= ANIMATION_SPEED) {
@@ -160,7 +205,7 @@ function update() {
             playerFrame = 0; // Reset to standing frame when not moving
         }
     }
-    
+
     // Send position update if player moved or changed direction
     if (moved || oldDirection !== playerDirection) {
         sendPlayerPosition();
@@ -170,33 +215,33 @@ function update() {
 function render() {
     // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
+
     // Draw background tiles
     drawBackground();
-    
+
     // Draw grid (for development)
     drawGrid();
-    
+
     // Draw other players
     for (const id in otherPlayers) {
         if (id !== playerId) {
             const player = otherPlayers[id];
             drawCharacter(
-                player.x, 
-                player.y, 
-                player.direction, 
+                player.x,
+                player.y,
+                player.direction,
                 player.frame
             );
         }
     }
-    
+
     // Draw player
     drawCharacter(playerX, playerY, playerDirection, playerFrame);
 }
 
 function drawBackground() {
     if (!assets.tiles.grass.loaded) return;
-    
+
     const tileSize = 32;
     for (let x = 0; x < canvas.width; x += tileSize) {
         for (let y = 0; y < canvas.height; y += tileSize) {
@@ -208,7 +253,7 @@ function drawBackground() {
 function drawGrid() {
     ctx.strokeStyle = 'rgba(200, 200, 200, 0.3)';
     ctx.lineWidth = 1;
-    
+
     // Draw vertical lines
     for (let x = 0; x <= canvas.width; x += TILE_SIZE) {
         ctx.beginPath();
@@ -216,7 +261,7 @@ function drawGrid() {
         ctx.lineTo(x, canvas.height);
         ctx.stroke();
     }
-    
+
     // Draw horizontal lines
     for (let y = 0; y <= canvas.height; y += TILE_SIZE) {
         ctx.beginPath();
@@ -238,20 +283,20 @@ function drawCharacter(x, y, direction, frame) {
         ctx.stroke();
         return;
     }
-    
+
     // Get the direction index
     const dirIndex = assets.player.directions.indexOf(direction);
     if (dirIndex === -1) return;
-    
+
     // Calculate source rectangle in the sprite sheet
     const srcX = frame * assets.player.width;
     const srcY = dirIndex * assets.player.height;
-    
+
     // Draw the character sprite
     ctx.drawImage(
         assets.player.sprite,
         srcX, srcY, assets.player.width, assets.player.height,
-        x - assets.player.width/2, y - assets.player.height/2, 
+        x - assets.player.width/2, y - assets.player.height/2,
         assets.player.width, assets.player.height
     );
 }
@@ -260,7 +305,17 @@ function drawCharacter(x, y, direction, frame) {
 function init() {
     loadAssets();
     gameLoop();
-    
+
+    // Request player list after a short delay to ensure connection is established
+    setTimeout(() => {
+        if (socket.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify({
+                type: 'get_players',
+                player_id: playerId
+            }));
+        }
+    }, 1000);
+
     // Ping the server every 30 seconds to keep the connection alive
     setInterval(() => {
         if (socket.readyState === WebSocket.OPEN) {
