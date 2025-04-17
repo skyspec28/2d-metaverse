@@ -1,6 +1,8 @@
 from rest_framework import serializers 
 from api.models import Avatar,Space,SpaceElement,Element,CustomUser,Map ,MapElement
+from django.contrib.auth import get_user_model
 
+User = get_user_model()
 
 class CustomUserMetadataSerializer(serializers.ModelSerializer):
     class Meta:
@@ -116,3 +118,18 @@ class MapSerializer(serializers.ModelSerializer):
             )
         
         return map_instance
+
+class UserSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True)
+    
+    class Meta:
+        model = User
+        fields = ('id', 'email', 'username', 'password')
+    
+    def create(self, validated_data):
+        user = User.objects.create_user(
+            email=validated_data['email'],
+            username=validated_data['username'],
+            password=validated_data['password']
+        )
+        return user
