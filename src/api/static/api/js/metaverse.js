@@ -111,7 +111,26 @@ function updatePlayerList(players) {
 // Display a chat message
 function displayChatMessage(senderId, message) {
     console.log(`Chat from ${senderId}: ${message}`);
-    // In a real implementation, we would display this in a chat UI
+
+    const chatMessages = document.getElementById('chat-messages');
+    const messageDiv = document.createElement('div');
+
+    // Determine message type
+    if (senderId === 'system') {
+        messageDiv.className = 'message system';
+        messageDiv.textContent = message;
+    } else if (senderId === playerId) {
+        messageDiv.className = 'message user';
+        messageDiv.textContent = `You: ${message}`;
+    } else {
+        messageDiv.className = 'message other';
+        messageDiv.textContent = `Player ${senderId}: ${message}`;
+    }
+
+    chatMessages.appendChild(messageDiv);
+
+    // Scroll to bottom
+    chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
 socket.onclose = function(e) {
@@ -313,8 +332,40 @@ function init() {
                 type: 'get_players',
                 player_id: playerId
             }));
+
+            // Display room information
+            displayChatMessage('system', `You joined room: ${roomName}`);
         }
     }, 1000);
+
+    // Set up chat input handling
+    const chatInput = document.getElementById('chat-input');
+    const chatSendButton = document.getElementById('chat-send');
+
+    function sendChatMessage() {
+        const message = chatInput.value.trim();
+        if (message && socket.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify({
+                type: 'chat_message',
+                player_id: playerId,
+                message: message
+            }));
+
+            // Clear input after sending
+            chatInput.value = '';
+
+            // Display own message immediately
+            displayChatMessage(playerId, message);
+        }
+    }
+
+    chatSendButton.addEventListener('click', sendChatMessage);
+
+    chatInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            sendChatMessage();
+        }
+    });
 
     // Ping the server every 30 seconds to keep the connection alive
     setInterval(() => {

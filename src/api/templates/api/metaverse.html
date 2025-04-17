@@ -17,8 +17,18 @@
                 <li>Loading...</li>
             </ul>
         </div>
+        <div class="chat-box">
+            <div class="chat-messages" id="chat-messages">
+                <div class="message system">Welcome to the Metaverse!</div>
+            </div>
+            <div class="chat-input">
+                <input type="text" id="chat-input" placeholder="Type a message...">
+                <button id="chat-send">Send</button>
+            </div>
+        </div>
         <div id="controls">
             <p>2D Metaverse - Move with arrow keys, interact with space bar</p>
+            <a href="{% url 'metaverse-rooms' %}" class="room-button">Change Room</a>
         </div>
     </div>
 
