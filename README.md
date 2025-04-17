@@ -1,54 +1,124 @@
-🚀 Emoji Commit Message Convention
+# 2D Metaverse
 
-We follow an emoji-based commit message convention to make our Git history more readable and organized. Each commit should begin with an appropriate emoji that represents the type of change.
+A virtual world platform where users can interact, customize their avatars, and explore different spaces.
 
+## Features
 
-## **🔥 Emoji Commit Message Convention**
+- User authentication and registration
+- Avatar customization
+- Real-time movement and interaction
+- Multiple customizable spaces
+- Interactive elements
+- WebSocket-based communication
+- Admin dashboard
 
+## Tech Stack
 
-### 📋 Emoji Guide  
+### Backend
+- Django
+- Django REST Framework
+- Channels (WebSockets)
+- PostgreSQL
+- Redis
 
-| Emoji | Name | Meaning | Example Commit Message |
-| --- | --- | --- | --- |
-| 🎉 **tada** | Initial commit | `🎉 feat: initial project setup` |
-| ✨ **sparkles** | New feature | `✨ feat: add user authentication` |
-| 🐛 **bug** | Bug fix | `🐛 fix: resolve issue with login form` |
-| 🚑 **ambulance** | Critical hotfix | `🚑 fix: urgent API authentication issue` |
-| 🛠️ **hammer_and_wrench** | Refactoring | `🛠️ refactor: optimize database queries` |
-| 🚀 **rocket** | Performance improvement | `🚀 perf: speed up image processing` |
-| 🎨 **art** | UI/UX improvements | `🎨 style: improve button hover effect` |
-| 📝 **memo** | Documentation | `📝 docs: update README with setup guide` |
-| ✅ **white_check_mark** | Adding tests | `✅ test: add unit test for user model` |
-| 🔍 **mag** | Fixing or updating tests | `🔍 test: fix broken API test` |
-| 🚨 **rotating_light** | Fixing warnings/errors | `🚨 fix: remove unused imports` |
-| 🔥 **fire** | Removing code/files | `🔥 chore: remove unused config file` |
-| 📦 **package** | Dependency changes | `📦 chore: upgrade Django to 4.2.1` |
-| 🗃️ **card_file_box** | Database changes | `🗃️ db: add new field to User model` |
-| 🔄 **repeat** | CI/CD updates | `🔄 ci: update GitHub Actions workflow` |
-| 🏗️ **building_construction** | Work in progress (WIP) | `🏗️ wip: implement notifications feature` |
-| 🔧 **wrench** | Configuration changes | `🔧 chore: update pytest settings` |
-| ⚡ **zap** | Minor optimization | `⚡ perf: reduce API response time` |
-| 🔊 **loud_sound** | Logging updates | `🔊 chore: improve error logging` |
-| ♻️ **recycle** | Code restructuring without changing behavior | `♻️ refactor: simplify API response formatting` |
+### Frontend
+- React
+- TypeScript
+- Phaser.js
+- Material-UI
 
----
+## Setup
 
-### ✅ Usage Guidelines  
-- Keep commit messages **clear and concise**.  
-- Use **present tense** (e.g., `fix: update layout`, not `fixed` or `fixes`).  
-- Separate emoji and type with a space (e.g., `✨ feat: add dark mode`).  
-- Stick to the **convention** to maintain consistency in commit history.  
+### Prerequisites
+- Python 3.8+
+- Node.js 14+
+- PostgreSQL
+- Redis
 
-This helps keep your Git history **clean, readable, and well-organized**! 🚀  
+### Backend Setup
 
----
+1. Create a virtual environment:
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+```
 
-## **📌 Example Commit Messages Using This Convention**
+2. Install dependencies:
+```bash
+pip install -r requirements.txt
+```
 
-1. `✅ test: add API test for Avatar retrieval`
-2. `🐛 fix: resolve 404 error in Avatar API`
-3. `📝 docs: update API documentation`
-4. `🚀 perf: optimize database queries for faster retrieval`
-5. `🔍 test: fix failing test case in Avatar endpoint`
+3. Set up environment variables:
+```bash
+cp .env.example .env
+# Edit .env with your configuration
+```
 
----
+4. Run migrations:
+```bash
+python manage.py migrate
+```
+
+5. Create a superuser:
+```bash
+python manage.py createsuperuser
+```
+
+### Frontend Setup
+
+1. Install dependencies:
+```bash
+cd frontend
+npm install
+```
+
+2. Start the development server:
+```bash
+npm start
+```
+
+## Running the Application
+
+1. Start the backend server:
+```bash
+python manage.py runserver
+```
+
+2. Start the frontend development server:
+```bash
+cd frontend
+npm start
+```
+
+3. Access the application at `http://localhost:3000`
+
+## API Documentation
+
+### Authentication
+- POST `/api/auth/register/` - Register a new user
+- POST `/api/auth/login/` - Login and get JWT tokens
+
+### Spaces
+- GET `/api/spaces/all/` - List all spaces
+- POST `/api/spaces/new/` - Create a new space
+- DELETE `/api/spaces/delete/<id>/` - Delete a space
+
+### Avatars
+- GET `/api/avatars/<id>/` - Get avatar details
+- POST `/api/admin/avatar/new/` - Create a new avatar (admin only)
+
+### Elements
+- POST `/api/admin/element/new/` - Create a new element (admin only)
+- PUT `/api/admin/element/update/<id>/` - Update an element (admin only)
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m '✨ feat: add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
