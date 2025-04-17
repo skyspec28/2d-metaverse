@@ -15,5 +15,6 @@ urlpatterns =[
     path('admin/avatar/new/', AdminCreateAvatarView, name='avatar-create'),
     path('admin/map/new/', views.MapCreateAPIView.as_view(), name='map-create'),
     path("metaverse/", views.metaverse, name="metaverse"),
+    path("metaverse/rooms/", views.metaverse_rooms, name="metaverse-rooms"),
     path("<str:room_name>/", views.room, name="room"),
 ]

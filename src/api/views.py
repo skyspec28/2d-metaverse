@@ -290,3 +290,7 @@ def metaverse(request):
     """Render the main metaverse interface"""
     return render(request, "api/metaverse.html")
 
+def metaverse_rooms(request):
+    """Render the metaverse rooms selection page"""
+    return render(request, "api/rooms.html")
+
